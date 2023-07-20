@@ -2,48 +2,163 @@ library(rsconnect)
 library(shiny)
 library(readxl)
 library(tidyverse)
-library(echarts4r)
 library(reactable)
-library(sf)
-library(leaflet)
 
-# Define UI for application that draws a histogram
+cen_select <- suppressWarnings(read.csv("cen_select.csv"))
+
 ui <- fluidPage(
-
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins 
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
-        )
+  titlePanel("England & Wales - Demographic Statistics"),
+  tags$br(),
+  tags$br(),
+  sidebarLayout(
+    sidebarPanel(
+      tags$head(tags$style(type="text/css", "
+             #loadmessage {
+               position: fixed;
+               top: 0px;
+               left: 0px;
+               width: 100%;
+               padding: 5px 0px 5px 0px;
+               text-align: center;
+               font-weight: bold;
+               font-size: 100%;
+               color: #000000;
+               background-color: #CCFF66;
+               z-index: 105;
+             }
+          ")),
+      conditionalPanel(condition="$('html').hasClass('shiny-busy')",
+                       tags$div("Loading...",id="loadmessage")),
+      uiOutput("selectYear"),
+      uiOutput("selectCat"),
+      uiOutput("geoSet")
+    ),
+    mainPanel(
+      reactableOutput("table"),
+      tags$br(),
+      tags$br(),
+      downloadButton("downloadData", "Download")
     )
+  )
+  
 )
 
-# Define server logic required to draw a histogram
 server <- function(input, output) {
+  
+  output$geoSet <- renderUI({
+    
+    actionButton("show", "Geography settings")
+    
+  })
+  
+  observeEvent(input$show, {
+    
+    if (input$show == 0)
+      return(showModal(modalDialog(
+        title = "Geography settings",
+        easyClose = T,
+        footer = modalButton("Exit"),
+        
+        c(
+          output$selectArea <- renderUI({
+            selectInput(
+              inputId="area",
+              label="Area",
+              selected = input$area,
+              choices = c("",unique(cen_select$area[cen_select$year==input$year & cen_select$cat==input$cat]))
+            )
+          }),
+          
+          output$selectLoc<- renderUI({
+            validate(need(input$year, ''))
+            validate(need(input$cat, ''))
+            validate(need(input$area, ''))
+            selectInput(
+              inputId="loc",
+              label="Locations",
+              selected = input$loc,
+              choices = unique(df_readFUN(input$year,input$cat,input$area)$area),
+              multiple=T
+            )
+          })
+        )
+      )))
+    else 
+      return(showModal(modalDialog(
+        title = "Geography settings",
+        easyClose = T,
+        footer = modalButton("Exit"),
+        
+        c(
+          output$selectArea <- renderUI({
+            selectInput(
+              inputId="area",
+              label="Area",
+              selected = input$area,
+              choices = c("",unique(cen_select$area[cen_select$year==input$year & cen_select$cat==input$cat]))
+            )
+          }),
+          
+          output$selectLoc<- renderUI({
+            validate(need(input$year, ''))
+            validate(need(input$cat, ''))
+            validate(need(input$area, ''))
+            selectInput(
+              inputId="loc",
+              label="Locations",
+              selected = input$loc,
+              choices = unique(df_readFUN(input$year,input$cat,input$area)$area),
+              multiple=T
+            )
+          })
+        )
+      )))
+    
+  })
+  
+  output$selectYear <- renderUI({
+    selectInput("year",
+                "Census",
+                choices = c("",unique(cen_select$year))
+    )
+  })
+  
+  output$selectCat <- renderUI({
+    selectInput(
+      inputId = "cat",
+      label = "Category",
+      choices = c("",unique(cen_select$cat[cen_select$year==input$year]))
+    )
+  })
+  
+  output$table <- renderReactable({
+    
+    validate(need(input$year, 'Please select a year, category, and area'))
+    validate(need(input$cat, 'Please select a year, category, and area'))
+    validate(need(input$area, 'Please select a year, category, and area'))
+      
+    tableFUN(input$year,input$cat,input$area,input$loc)
+    
+  })
+  
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste0("cen",input$year,"_",input$cat,"_",input$area,".csv")
+    },
+    content = function(file) {
+      write.csv(writeFUN(input$year,input$cat,input$area,input$loc), file)
+    }
+  )
 
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white',
-             xlab = 'Waiting time to next eruption (in mins)',
-             main = 'Histogram of waiting times')
-    })
 }
 
-# Run the application 
+
 shinyApp(ui = ui, server = server)
+
+
+
+
+
+
+
+
