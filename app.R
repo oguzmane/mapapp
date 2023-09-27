@@ -31,7 +31,8 @@ ui <- fluidPage(
                        tags$div("Loading...",id="loadmessage")),
       uiOutput("selectYear"),
       uiOutput("selectCat"),
-      uiOutput("geoSet")
+      uiOutput("selectArea"),
+      uiOutput("selectLoc")
     ),
     mainPanel(
       reactableOutput("table"),
@@ -45,77 +46,6 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
-  output$geoSet <- renderUI({
-    
-    actionButton("show", "Geography settings")
-    
-  })
-  
-  observeEvent(input$show, {
-    
-    if (input$show == 0)
-      return(showModal(modalDialog(
-        title = "Geography settings",
-        easyClose = T,
-        footer = modalButton("Exit"),
-        
-        c(
-          output$selectArea <- renderUI({
-            selectInput(
-              inputId="area",
-              label="Area",
-              selected = input$area,
-              choices = c("",unique(cen_select$area[cen_select$year==input$year & cen_select$cat==input$cat]))
-            )
-          }),
-          
-          output$selectLoc<- renderUI({
-            validate(need(input$year, ''))
-            validate(need(input$cat, ''))
-            validate(need(input$area, ''))
-            selectInput(
-              inputId="loc",
-              label="Locations",
-              selected = input$loc,
-              choices = unique(df_readFUN(input$year,input$cat,input$area)$area),
-              multiple=T
-            )
-          })
-        )
-      )))
-    else 
-      return(showModal(modalDialog(
-        title = "Geography settings",
-        easyClose = T,
-        footer = modalButton("Exit"),
-        
-        c(
-          output$selectArea <- renderUI({
-            selectInput(
-              inputId="area",
-              label="Area",
-              selected = input$area,
-              choices = c("",unique(cen_select$area[cen_select$year==input$year & cen_select$cat==input$cat]))
-            )
-          }),
-          
-          output$selectLoc<- renderUI({
-            validate(need(input$year, ''))
-            validate(need(input$cat, ''))
-            validate(need(input$area, ''))
-            selectInput(
-              inputId="loc",
-              label="Locations",
-              selected = input$loc,
-              choices = unique(df_readFUN(input$year,input$cat,input$area)$area),
-              multiple=T
-            )
-          })
-        )
-      )))
-    
-  })
-  
   output$selectYear <- renderUI({
     selectInput("year",
                 "Census",
@@ -128,6 +58,29 @@ server <- function(input, output) {
       inputId = "cat",
       label = "Category",
       choices = c("",unique(cen_select$cat[cen_select$year==input$year]))
+    )
+  })
+  
+  output$selectArea <- renderUI({
+    selectInput(
+      inputId="area",
+      label="Area",
+      selected = input$area,
+      choices = c("",unique(cen_select$area[cen_select$year==input$year & cen_select$cat==input$cat]))
+    )
+  })
+  
+  
+  output$selectLoc<- renderUI({
+    validate(need(input$year, ''))
+    validate(need(input$cat, ''))
+    validate(need(input$area, ''))
+    selectInput(
+      inputId="loc",
+      label="Locations",
+      selected = input$loc,
+      choices = unique(df_readFUN(input$year,input$cat,input$area)$area),
+      multiple=T
     )
   })
   

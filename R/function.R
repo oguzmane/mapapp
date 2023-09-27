@@ -17,6 +17,10 @@ cat_indexFUN <- function(cat) {
     
     return("sex")
     
+  } else if (cat=="Age") {
+    
+    return("age")
+    
   }
   
 }
