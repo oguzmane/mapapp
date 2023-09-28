@@ -1,54 +1,41 @@
 
 cat_indexFUN <- function(cat) {
   
-  if (cat=="Ethnicity (Raw)") {
+  if (cat=="Age") {
     
-    return("ethR")
+    return("age")
     
-  } else if (cat=="Ethnicity (Broad)") {
+  } else if (cat=="Ethnicity") {
     
-    return("ethB")
+    return("ethnicity")
     
   } else if (cat=="Gender") {
     
-    return("gen")
+    return("gender")
     
   } else if (cat=="Sex") {
     
     return("sex")
     
-  } else if (cat=="Age") {
-    
-    return("age")
-    
-  }
-  
-}
-
-area_indexFUN <- function(area) {
-  
-  if (area=="County") {
-    
-    return("county")
-    
-  } else if (area=="District") {
-    
-    return("district")
-    
-  }
+  } 
   
 }
 
 df_readFUN <- function(year,cat,area) {
   
   cat1 <- cat_indexFUN(cat)
-  area1 <- area_indexFUN(area)
   
-  read_rds(paste0("inst/pop/cen",year,"/",cat1,"/",area1,"/",
-                  "cen",year,"_",cat1,"_",area1,".rds")) %>% 
+  read_rds(paste0("inst/pop/cen",year,"/",
+                  "cen",year,"_",cat1,
+                  ".rds")) %>% 
     rename(cat=all_of(cat1),
-           area=all_of(area1))
-  
+           area=tolower(area)) %>% 
+    dplyr::select(area,cat,pop) %>% 
+    group_by(area,cat) %>% 
+    mutate(pop=sum(pop)) %>% 
+    ungroup() %>% 
+    distinct()
+    
 }
 
 tableFUN <- function(year,cat,area,loc) {
@@ -69,7 +56,10 @@ tableFUN <- function(year,cat,area,loc) {
 writeFUN <- function(year,cat,area,loc) {
   
   df_readFUN(year,cat,area) %>% 
-    filter(area%in%loc) 
+    filter(area%in%loc) %>% 
+    rename_with(.cols=area, ~area) %>% 
+    rename_with(.cols=cat, ~cat) %>% 
+    rename_with(.cols=pop, ~"Population Size")
   
 }
 

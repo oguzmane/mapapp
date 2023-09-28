@@ -66,7 +66,8 @@ server <- function(input, output) {
       inputId="area",
       label="Area",
       selected = input$area,
-      choices = c("",unique(cen_select$area[cen_select$year==input$year & cen_select$cat==input$cat]))
+      choices = c("","Region","County","District")
+        # c("",unique(cen_select$area[cen_select$year==input$year & cen_select$cat==input$cat]))
     )
   })
   
@@ -79,21 +80,22 @@ server <- function(input, output) {
       inputId="loc",
       label="Locations",
       selected = input$loc,
-      choices = unique(df_readFUN(input$year,input$cat,input$area)$area),
+      choices = sort(unique(df_readFUN(input$year,input$cat,input$area)$area)),
+        # unique(df_readFUN(input$year,input$cat,input$area)$area),
       multiple=T
     )
   })
   
   output$table <- renderReactable({
-    
+
     validate(need(input$year, 'Please select a year, category, and area'))
     validate(need(input$cat, 'Please select a year, category, and area'))
     validate(need(input$area, 'Please select a year, category, and area'))
-      
+
     tableFUN(input$year,input$cat,input$area,input$loc)
-    
+
   })
-  
+
   output$downloadData <- downloadHandler(
     filename = function() {
       paste0("cen",input$year,"_",input$cat,"_",input$area,".csv")
