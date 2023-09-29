@@ -66,7 +66,7 @@ server <- function(input, output) {
       inputId="area",
       label="Area",
       selected = input$area,
-      choices = c("","Region","County","District")
+      choices = c("","Country","Region","County","District")
         # c("",unique(cen_select$area[cen_select$year==input$year & cen_select$cat==input$cat]))
     )
   })
